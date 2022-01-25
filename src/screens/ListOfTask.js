@@ -11,16 +11,27 @@ import {
     Image,
     TextInput
 } from 'react-native'
-import CheckBox from '@react-native-community/checkbox'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNavigation, useRoute} from '@react-navigation/native';
 
-const  ListOfTask = ({navigation})=> {
+const  ListOfTask = ()=> {
 
     const [tasks, setTasks] = useState([]);
 
-    useEffect(_ => {
-        getTasksFromLS();
-    }, []);
+    const navigation = useNavigation();
+
+    useEffect(() => {
+   
+    
+        const unsubscribe = navigation.addListener('focus', () => {
+                    getTasksFromLS()
+       
+         
+        });
+    
+        
+        return unsubscribe;
+      }, [navigation]);
 
     const getTasksFromLS = async _ => {
         try {
@@ -32,29 +43,6 @@ const  ListOfTask = ({navigation})=> {
         }
     }
 
-    const pushTask = async (title, taskDiscription) => {
-        const allTasks = tasks;
-        setTasks([...allTasks, {
-            id: tasks.length,
-            title,
-            activity: taskDiscription,
-            completed: false
-        }]);
-
-        try {
-            const jsonValue = JSON.stringify([...allTasks, {
-                id: tasks.length,
-                title,
-                activity: taskDiscription,
-                completed: false
-            }])
-            await AsyncStorage.setItem('tasks', jsonValue)
-        } catch (e) {
-            // save error
-            console.error(e);
-        }
-        console.log('Done.')
-    }
 
     const deleteTask = async id => {
         const updatedTasksList = tasks.filter(task => task.id !== id);
@@ -99,21 +87,22 @@ const  ListOfTask = ({navigation})=> {
                                 style={styles.secondaryContainer}
                             >
                                 <View>
-                                    <CheckBox
-                                        disabled={false}
-                                        value={item.completed}
-                                        onValueChange={newValue => {
-                                            const allTasks = tasks;
-                                            allTasks[index].completed = newValue
-                                            setTasks([...allTasks]);
-                                        }}
-                                        tintColor="lightgreen"
-                                        onTintColor="lightgreen"
-                                        onCheckColor="lightgreen"
-                                    />
+                                    <TouchableOpacity  
+                                    onPress={()=>{
+
+                                        const AllTasks = tasks;
+                                            AllTasks[index].completed = !AllTasks[index].completed
+                                            setTasks([...AllTasks]);
+
+                                    }}
+                                    style={{width:20,height:20,borderRadius:3,borderWidth:2,borderColor:'black',backgroundColor:item.completed?'lightgreen':'gray'}}
+                                    
+                                    >
+
+                                    </TouchableOpacity>
                                 </View>
                                 <TouchableOpacity
-                                    style={styles.binView}
+                                   
                                     onPress={_ => {
                                         deleteTask(item.id)
                                     }}
@@ -142,9 +131,9 @@ const  ListOfTask = ({navigation})=> {
                 <TouchableOpacity
                     style={styles.buttonStyle}
                     onPress={() => navigation.navigate('AddTask', {
-                        addTasksCallback: (title, taskDesc) => {
-                            pushTask(title, taskDesc)
-                        }
+                        
+                            tasks
+                        
                     })}
                 >
                     <Image
@@ -221,12 +210,9 @@ const styles = StyleSheet.create({
         height: 40
     },
     secondaryContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
+        
+        justifyContent: 'space-between',
         alignItems: 'center'
-    },
-    binView: {
-        marginLeft: 20
     },
     itemTitleStyle: {
         fontSize: 30,

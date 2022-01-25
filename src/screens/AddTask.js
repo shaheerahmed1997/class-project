@@ -8,14 +8,41 @@ import {
     TouchableOpacity,
     FlatList,
     TextInput
-} from 'react-native'
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const  AddTask = ({navigation,route}) => {
 
     const [taskDescription, setTaskDescription] = useState('');
 
     const [taskTitle, setTaskTitle] = useState('');
+    const [tasks, setTasks] = useState(route.params.tasks);
 
+
+    const saveTask = async (title, taskDiscription) => {
+        const allTasks = tasks
+        setTasks([...allTasks, {
+            id: tasks.length,
+            title,
+            activity: taskDiscription,
+            completed: false
+        }]);
+
+        try {
+            const jsonValue = JSON.stringify([...allTasks, {
+                id: tasks.length,
+                title,
+                activity: taskDiscription,
+                completed: false
+            }])
+            await AsyncStorage.setItem('tasks', jsonValue)
+        } catch (e) {
+            // save error
+            console.error(e);
+        }
+        navigation.goBack()
+        console.log('Done.')
+    }
     return (
         <View style={styles.contianer}>
             <View style={{...styles.textInputContainer, marginTop: 5}}>
@@ -38,8 +65,9 @@ const  AddTask = ({navigation,route}) => {
             <TouchableOpacity 
                 style={styles.buttonStyle}
                 onPress={ ()  => {
-                    route.params.addTasksCallback(taskTitle, taskDescription)
-                    navigation.pop()
+   
+                    saveTask(taskTitle,taskDescription)
+
                 }}
             >
                 <Text>Add</Text>
